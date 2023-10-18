@@ -1,46 +1,18 @@
+# Overview
+This chatbot is a simple conversational agent that interacts with users based on predefined patterns and responses. It uses natural language processing techniques to understand user input and generate appropriate responses.
 
-def chat():
-    """ in test mode, we don't to create the backward path
-    """
-    _, enc_vocab = data.load_vocab(os.path.join(config.PROCESSED_PATH, 'vocab.enc'))
-    inv_dec_vocab, _ = data.load_vocab(os.path.join(config.PROCESSED_PATH, 'vocab.dec'))
+## Features
+Pattern-Response Matching: The chatbot matches user input against predefined patterns and responds with corresponding messages.
 
-    model = ChatBotModel(True, batch_size=1)
-    model.build_graph()
+## Preprocessing: User input undergoes tokenization, stop word removal, and stemming to improve pattern matching accuracy.
+User Interaction: The chatbot engages in a conversation with the user until the user decides to exit.
+Usage
+To use the chatbot, prepare a data file (Data.txt) with tab-separated patterns and responses. Each line in the file should contain one pattern and its corresponding response.
 
-    saver = tf.train.Saver()
+## Dependencies
+Python 3.x
+NLTK library for natural language processing tasks.
 
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        _check_restore_parameters(sess, saver)
-        output_file = open(os.path.join(config.PROCESSED_PATH, config.OUTPUT_FILE), 'a+')
-        # Decode from standard input.
-        max_length = config.BUCKETS[-1][0]
-        print('Welcome to TensorBro. Say something. Enter to exit. Max length is', max_length)
-        while True:
-            line = _get_user_input()
-            if len(line) > 0 and line[-1] == '\n':
-                line = line[:-1]
-            if line == '':
-                break
-            output_file.write('HUMAN ++++ ' + line + '\n')
-            # Get token-ids for the input sentence.
-            token_ids = data.sentence2id(enc_vocab, str(line))
-            if (len(token_ids) > max_length):
-                print('Max length I can handle is:', max_length)
-                line = _get_user_input()
-                continue
-            # Which bucket does it belong to?
-            bucket_id = _find_right_bucket(len(token_ids))
-            # Get a 1-element batch to feed the sentence to the model.
-            encoder_inputs, decoder_inputs, decoder_masks = data.get_batch([(token_ids, [])], 
-                                                                            bucket_id,
-                                                                            batch_size=1)
-            # Get output logits for the sentence.
-            _, _, output_logits = run_step(sess, model, encoder_inputs, decoder_inputs,
-                                           decoder_masks, bucket_id, True)
-            response = _construct_response(output_logits, inv_dec_vocab)
-            print(response)
-            output_file.write('BOT ++++ ' + response + '\n')
-        output_file.write('=============================================\n')
-        output_file.close()
+## Troubleshooting
+Formatting Issues: Ensure that your Data.txt file is correctly formatted with one tab-separated pattern and response per line.
+Permission Errors: If you encounter permission errors while accessing the data file, make sure you have the necessary permissions to read the file.
